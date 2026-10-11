@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Emergency Power Grid Restoration Control Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <style>
+    :root {
+      --bg: #071722;
+      --panel: rgba(11, 23, 36, 0.95);
+      --panel-strong: #0d1d2b;
+      --panel-soft: #12263a;
+      --line: rgba(109, 148, 182, 0.3);
+      --text: #edf6ff;
+      --muted: #a9bfd3;
+      --accent: #54d4a8;
+      --accent-2: #5ab9ff;
+      --warning: #f9c74f;
+      --danger: #ff5c7a;
+      --danger-deep: #b21a3d;
+      --shadow: 0 20px 50px rgba(2, 8, 15, 0.45);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: linear-gradient(180deg, #051018 0%, #071722 100%); color: var(--text); font-family: 'Inter', sans-serif; }
+    body { min-height: 100vh; }
+
+    button, select {
+      appearance: none;
+      border: 1px solid rgba(128, 175, 222, 0.35);
+      background: rgba(18, 38, 58, 0.9);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 9px 12px;
+      font: inherit;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+    button:hover { transform: translateY(-1px); border-color: rgba(90, 185, 255, 0.7); }
+    button.primary { background: linear-gradient(135deg, #1f7f8d, #1c9a74); border-color: rgba(84, 212, 168, 0.7); }
+    button.danger { background: linear-gradient(135deg, rgba(178, 26, 61, 0.65), rgba(127, 21, 45, 0.8)); border-color: rgba(255, 92, 122, 0.7); }
+    button.ghost { background: rgba(10, 20, 30, 0.7); }
+    select { min-width: 150px; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      padding: 18px 22px 16px;
+      border-bottom: 1px solid rgba(124, 150, 175, 0.2);
+      background: rgba(9, 19, 29, 0.9);
+      box-shadow: inset 0 -1px rgba(124,150,175,0.08);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(10px);
+    }
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--warning);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2vw, 2.2rem);
+      line-height: 1.1;
+    }
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .topbar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1.75fr) minmax(320px, 430px);
+      gap: 18px;
+      height: calc(100vh - 94px);
+      padding: 18px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid rgba(106, 147, 186, 0.22);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .map-card {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(130px,1fr));
+      gap: 12px;
+      padding: 18px 18px 0;
+    }
+    .stat-box {
+      background: linear-gradient(180deg, rgba(14, 32, 46, 0.97), rgba(12, 26, 36, 0.95));
+      border: 1px solid rgba(101, 140, 180, 0.25);
+      border-radius: 14px;
+      padding: 14px 12px;
+    }
+    .stat-box strong {
+      display: block;
+      font-size: clamp(1.3rem, 2.1vw, 2rem);
+      margin-bottom: 5px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+    .stat-box span {
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    #map {
+      flex: 1;
+      height: 100%;
+      min-height: 420px;
+      margin: 18px 18px 12px;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(120, 160, 200, 0.25);
+      background: linear-gradient(180deg, #0d2236, #091c2d);
+    }
+
+    .fallback-overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: radial-gradient(circle at center, rgba(15, 27, 36, 0.9), rgba(8,19,28,0.96));
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 30px;
+      z-index: 600;
+    }
+    .fallback-overlay.visible { display: grid; }
+
+    .map-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 0 18px 0;
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .legend-strip {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 0 18px 16px;
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+    .legend-item { display: inline-flex; align-items: center; gap: 8px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 18px 18px;
+    }
+
+    .sidebar { display: flex; flex-direction: column; min-height: 0; }
+    .tabbar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      border-bottom: 1px solid rgba(104, 140, 178, 0.22);
+      background: rgba(7, 17, 25, 0.9);
+    }
+    .tab {
+      background: transparent; border: 0; border-radius: 0; padding: 12px 8px; color: var(--muted); position: relative; }
+    .tab.active {
+      color: var(--text);
+      background: rgba(18, 38, 58, 0.9);
+      box-shadow: inset 0 -2px 0 var(--accent);
+    }
+
+    .panel-content {
+      padding: 18px;
+      overflow: auto;
+      height: calc(100% - 52px);
+    }
+    .panel-group { margin-bottom: 16px; }
+    .panel-group h3, .panel-group h4 {
+      margin: 0 0 12px;
+      font-size: 0.86rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .info-block {
+      background: rgba(12, 24, 33, 0.9);
+      border: 1px solid rgba(101, 140, 180, 0.2);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+    }
+    .info-block p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 0.9rem;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(109, 148, 182, 0.16);
+      font-size: 0.85rem;
+    }
+    .row:last-child { border-bottom: 0; }
+    .row span:first-child { color: var(--muted); }
+    .accent { color: var(--accent); }
+    .warning { color: var(--warning); }
+    .danger-text { color: var(--danger); }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(84,212,168,0.12);
+      color: var(--accent);
+      border: 1px solid rgba(84,212,168,0.2);
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .tag.warning { background: rgba(249,199,79,0.12); color: var(--warning); border-color: rgba(249,199,79,0.2); }
+    .tag.danger { background: rgba(255,92,122,0.12); color: var(--danger); border-color: rgba(255,92,122,0.2); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      margin-top: 6px;
+    }
+    th, td {
+      padding: 7px 6px;
+      border-bottom: 1px solid rgba(109, 148, 182, 0.14);
+      text-align: left;
+    }
+    th { color: var(--muted); font-weight: 600; }
+
+    .leaflet-container {
+      background: rgba(9, 19, 29, 1);
+      font: inherit;
+    }
+    .leaflet-control-attribution { font-size: 10px; }
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: rgba(8, 18, 25, 0.96); color: var(--text); }
+    .leaflet-popup-content { margin: 10px 14px; min-width: 170px; }
+    .leaflet-popup-content strong { display: block; margin-bottom: 6px; }
+    .leaflet-popup-content .meta { color: var(--muted); font-size: 0.75rem; }
+    .leaflet-control-zoom a { background: rgba(16, 33, 47, 0.92); color: var(--text); border-color: rgba(118,153,188,0.28); }
+
+    @media (max-width: 980px) {
+      .app-shell { grid-template-columns: 1fr; height: auto; }
+      .sidebar { min-height: 400px; }
+      .stat-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+      .topbar { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">SIMULATED DISASTER SCENARIO — FOR EDUCATIONAL PURPOSES</div>
+      <h1>Emergency Power Grid Restoration Control Center</h1>
+      <p class="subtitle">Bengaluru flood response: prioritize critical service restoration with minimum repair effort</p>
+    </div>
+    <div class="topbar-actions">
+      <button id="toggleFloodBtn" class="ghost">Flood Layer: ON</button>
+      <button id="resetBtn" class="ghost">Reset</button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="card map-card">
+      <div class="stat-grid">
+        <div class="stat-box">
+          <strong id="servedText">2/7</strong>
+          <span>Locations powered</span>
+        </div>
+        <div class="stat-box">
+          <strong id="criticalText">2</strong>
+          <span>Critical facilities down</span>
+        </div>
+        <div class="stat-box">
+          <strong id="repairText">0/7</strong>
+          <span>Lines repaired</span>
+        </div>
+        <div class="stat-box">
+          <strong id="effortText">0</strong>
+          <span>Repair effort</span>
+        </div>
+      </div>
+
+      <div class="map-toolbar">
+        <div id="scenarioBadge" class="tag warning">Flood severity: medium</div>
+        <div class="toolbar-right">
+          <label for="severitySelect" style="color: var(--muted);">Flood severity</label>
+          <select id="severitySelect">
+            <option value="Low">Low</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="Severe">Severe</option>
+            <option value="Extreme">Extreme</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="position: relative; flex: 1; min-height: 0;">
+        <div id="map"></div>
+        <div id="fallbackOverlay" class="fallback-overlay">
+          <div>
+            <div style="font-size:1.1rem; margin-bottom:8px; font-weight:700; color: var(--text);">Map tiles unavailable</div>
+            <div>Control-center simulation remains active with the grid, flood overlays, and repair logic still running.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend-strip">
+        <span class="legend-item"><span class="dot" style="background: #4fe0a2;"></span>Powered</span>
+        <span class="legend-item"><span class="dot" style="background: #ff5c7a;"></span>Unpowered</span>
+        <span class="legend-item"><span class="dot" style="background: #4bd0ff;"></span>Water/flood risk</span>
+        <span class="legend-item"><span class="dot" style="background: #f9c74f;"></span>Repair recommendation</span>
+      </div>
+
+      <div class="action-row">
+        <button id="nextRepairBtn" class="primary">Repair next recommendation</button>
+        <button id="hospitalPathBtn" class="ghost">Dijkstra: hospital</button>
+        <button id="mstBtn" class="ghost">Kruskal MST</button>
+        <button id="damageBtn" class="danger">Inject storm damage</button>
+      </div>
+    </section>
+
+    <aside class="card sidebar">
+      <div class="tabbar">
+        <button class="tab active" data-tab="overview">Overview</button>
+        <button class="tab" data-tab="bfs">BFS</button>
+        <button class="tab" data-tab="dijkstra">Dijkstra</button>
+        <button class="tab" data-tab="kruskal">Kruskal</button>
+      </div>
+      <div id="panelContent" class="panel-content"></div>
+    </aside>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    const sourceNodes = ['S1', 'S2'];
+    const nodes = [
+      { id: 'S1', name: 'Simulated Substation S1', type: 'Substation', lat: 12.9691, lng: 77.5604, source: true, voltage: '33 kV', load: 72, customers: 4820 },
+      { id: 'S2', name: 'Simulated Substation S2', type: 'Substation', lat: 12.9165, lng: 77.6107, source: true, voltage: '11 kV', load: 68, customers: 4310 },
+      { id: 'H1', name: 'SIMULATED HOSPITAL', type: 'Hospital', lat: 12.9727, lng: 77.5944, voltage: '11 kV', load: 84, customers: 940, priority: 10 },
+      { id: 'W1', name: 'Water Treatment Plant', type: 'Facility', lat: 12.9348, lng: 77.6655, voltage: '11 kV', load: 77, customers: 1380, priority: 8 },
+      { id: 'T1', name: 'Telecom Relay', type: 'Telecom', lat: 12.9264, lng: 77.5648, voltage: '11 kV', load: 64, customers: 1160, priority: 6 },
+      { id: 'R1', name: 'Residential Cluster', type: 'Residential', lat: 12.9965, lng: 77.6210, voltage: '11 kV', load: 56, customers: 2800, priority: 4 },
+      { id: 'R2', name: 'Industrial Zone', type: 'Industrial', lat: 12.8797, lng: 77.6762, voltage: '11 kV', load: 61, customers: 2100, priority: 5 }
+    ];
+
+    const edges = [
+      { id: 'L1', a: 'S1', b: 'S2', weight: 5, repaired: false, damage: 'Severe', repairTime: 6, lengthKm: 4.8, status: 'Damaged' },
+      { id: 'L2', a: 'S1', b: 'H1', weight: 3, repaired: false, damage: 'Moderate', repairTime: 3, lengthKm: 2.1, status: 'Damaged' },
+      { id: 'L3', a: 'S2', b: 'W1', weight: 4, repaired: false, damage: 'High', repairTime: 4, lengthKm: 3.6, status: 'Damaged' },
+      { id: 'L4', a: 'S2', b: 'T1', weight: 2, repaired: false, damage: 'Moderate', repairTime: 2, lengthKm: 1.6, status: 'Damaged' },
+      { id: 'L5', a: 'H1', b: 'R1', weight: 6, repaired: false, damage: 'Severe', repairTime: 7, lengthKm: 5.2, status: 'Damaged' },
+      { id: 'L6', a: 'W1', b: 'R2', weight: 7, repaired: false, damage: 'Critical', repairTime: 9, lengthKm: 6.1, status: 'Damaged' },
+      { id: 'L7', a: 'R1', b: 'R2', weight: 8, repaired: false, damage: 'High', repairTime: 8, lengthKm: 6.8, status: 'Damaged' }
+    ];
+
+    const floodZones = [
+      { id: 'low', severity: 'Low', fillColor: '#34d399', opacity: 0.20, coords: [[12.992, 77.530], [13.004, 77.548], [12.998, 77.667], [12.977, 77.648], [12.965, 77.596], [12.970, 77.548]] },
+      { id: 'medium', severity: 'Medium', fillColor: '#facc15', opacity: 0.24, coords: [[12.965, 77.515], [12.995, 77.520], [13.010, 77.690], [12.980, 77.706], [12.944, 77.650], [12.938, 77.560]] },
+      { id: 'severe', severity: 'Severe', fillColor: '#f97316', opacity: 0.30, coords: [[12.955, 77.551], [12.979, 77.545], [12.980, 77.635], [12.962, 77.675], [12.935, 77.643], [12.926, 77.580]] },
+      { id: 'extreme', severity: 'Extreme', fillColor: '#1d4ed8', opacity: 0.34, coords: [[12.943, 77.572], [12.963, 77.560], [12.963, 77.646], [12.941, 77.670], [12.916, 77.642], [12.914, 77.585]] }
+    ];
+
+    const map = L.map('map', { zoomControl: true, scrollWheelZoom: true, preferCanvas: true }).setView([12.9608, 77.5948], 11.5);
+    const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    });
+    baseLayer.addTo(map);
+
+    const floodLayer = L.layerGroup().addTo(map);
+    const lineLayer = L.layerGroup().addTo(map);
+    const markerLayer = L.layerGroup().addTo(map);
+
+    const state = {
+      activeTab: 'overview',
+      floodEnabled: true,
+      floodSeverity: 'Medium',
+      highlightIds: [],
+      dispatchMessage: 'All critical power lines are currently damaged; dispatch your restoration team.'
+    };
+
+    function getNodeById(id) {
+      return nodes.find((n) => n.id === id);
+    }
+
+    function getEdgeById(id) {
+      return edges.find((e) => e.id === id);
+    }
+
+    function neighbors(id, onlyRepaired = true) {
+      const out = [];
+      for (const edge of edges) {
+        if (onlyRepaired && !edge.repaired) continue;
+        if (edge.a === id) out.push([edge.b, edge]);
+        else if (edge.b === id) out.push([edge.a, edge]);
+      }
+      return out;
+    }
+
+    function totalRepairedEffort() {
+      return edges.filter((e) => e.repaired).reduce((sum, e) => sum + e.weight, 0);
+    }
+
+    function poweredSet() {
+      const seen = new Set(sourceNodes);
+      const queue = [...sourceNodes];
+      while (queue.length) {
+        const current = queue.shift();
+        for (const [neighbor] of neighbors(current)) {
+          if (!seen.has(neighbor)) {
+            seen.add(neighbor);
+            queue.push(neighbor);
+          }
+        }
+      }
+      return seen;
+    }
+
+    function bfsState() {
+      const seen = new Set(sourceNodes);
+      const queue = [...sourceNodes];
+      const order = [];
+      while (queue.length) {
+        const current = queue.shift();
+        order.push(current);
+        for (const [neighbor] of neighbors(current)) {
+          if (!seen.has(neighbor)) {
+            seen.add(neighbor);
+            queue.push(neighbor);
+          }
+        }
+      }
+      return { seen, order };
+    }
+
+    function dijkstraTo(target) {
+      const ids = nodes.map((n) => n.id);
+      const distance = Object.fromEntries(ids.map((id) => [id, Infinity]));
+      const previous = {};
+      for (const nodeId of sourceNodes) distance[nodeId] = 0;
+
+      const visited = new Set();
+      while (visited.size < ids.length) {
+        const next = ids
+          .filter((id) => !visited.has(id))
+          .sort((a, b) => distance[a] - distance[b])[0];
+        if (!next || distance[next] === Infinity) break;
+        visited.add(next);
+
+        for (const [neighbor, edge] of neighbors(next, false)) {
+          const candidate = distance[next] + edge.weight;
+          if (candidate < distance[neighbor]) {
+            distance[neighbor] = candidate;
+            previous[neighbor] = { from: next, edge };
+          }
+        }
+      }
+
+      const path = [];
+      let cursor = target;
+      while (previous[cursor]) {
+        const step = previous[cursor];
+        path.unshift(step.edge);
+        cursor = step.from;
+      }
+      return { distance, path };
+    }
+
+    function unionFind() {
+      const parent = Object.fromEntries(nodes.map((n) => [n.id, n.id]));
+      const find = (x) => {
+        while (parent[x] !== x) {
+          parent[x] = parent[parent[x]];
+          x = parent[x];
+        }
+        return x;
+      };
+      const union = (a, b) => {
+        const rootA = find(a);
+        const rootB = find(b);
+        if (rootA === rootB) return false;
+        parent[rootB] = rootA;
+        return true;
+      };
+      return { parent, find, union };
+    }
+
+    function minimumSpanningTree() {
+      const uf = unionFind();
+      const chosen = [];
+      let total = 0;
+
+      const sortedEdges = [...edges].sort((a, b) => a.weight - b.weight);
+      for (const edge of sortedEdges) {
+        if (uf.union(edge.a, edge.b)) {
+          chosen.push(edge);
+          total += edge.weight;
+        }
+      }
+      return { chosen, total };
+    }
+
+    function greedyRepairPlan() {
+      const snapshot = JSON.parse(JSON.stringify(edges));
+      const chosen = [];
+      const used = new Set(edges.filter((e) => e.repaired).map((e) => e.id));
+
+      while (true) {
+        const base = poweredSet().size;
+        let best = null;
+
+        for (const edge of edges) {
+          if (edge.repaired || used.has(edge.id)) continue;
+          edge.repaired = true;
+          const gain = poweredSet().size - base;
+          edge.repaired = false;
+          const score = gain / edge.weight;
+          if (!best || score > best.score || (score === best.score && edge.weight < best.edge.weight)) {
+            best = { edge, gain, score };
+          }
+        }
+
+        if (!best || best.gain <= 0) break;
+        best.edge.repaired = true;
+        used.add(best.edge.id);
+        chosen.push(best.edge);
+      }
+
+      edges.forEach((edge, index) => {
+        const source = snapshot[index];
+        edge.repaired = source.repaired;
+      });
+      return chosen;
+    }
+
+    function formatEdge(edge) {
+      return `${edge.a}–${edge.b} (${edge.weight})`;
+    }
+
+    function toast(text) {
+      const banner = document.createElement('div');
+      banner.style.position = 'fixed';
+      banner.style.bottom = '20px';
+      banner.style.left = '50%';
+      banner.style.transform = 'translateX(-50%)';
+      banner.style.background = 'rgba(13, 29, 43, 0.96)';
+      banner.style.border = '1px solid rgba(90, 185, 255, 0.5)';
+      banner.style.boxShadow = '0 15px 35px rgba(0,0,0,0.25)';
+      banner.style.color = '#edf6ff';
+      banner.style.borderRadius = '12px';
+      banner.style.padding = '10px 16px';
+      banner.style.zIndex = '1200';
+      banner.style.fontSize = '0.8rem';
+      banner.textContent = text;
+      document.body.appendChild(banner);
+      setTimeout(() => banner.remove(), 2200);
+    }
+
+    function updateSummary() {
+      const connected = poweredSet();
+      const criticalDown = nodes.filter((node) => {
+        const priority = node.priority ?? 0;
+        return priority >= 6 && !connected.has(node.id);
+      }).length;
+
+      document.getElementById('servedText').textContent = `${connected.size}/${nodes.length}`;
+      document.getElementById('criticalText').textContent = String(criticalDown);
+      document.getElementById('repairText').textContent = `${edges.filter((edge) => edge.repaired).length}/${edges.length}`;
+      document.getElementById('effortText').textContent = String(totalRepairedEffort());
+      document.getElementById('scenarioBadge').textContent = `Flood severity: ${state.floodSeverity.toLowerCase()}`;
+    }
+
+    function updateFaultState() {
+      const floodState = {
+        Low: 'moderate disruption',
+        Medium: 'critical disruption',
+        Severe: 'severe disruption',
+        Extreme: 'extreme flood emergency'
+      };
+      document.getElementById('scenarioBadge').className = `tag ${state.floodSeverity === 'Extreme' ? 'danger' : 'warning'}`;
+      document.getElementById('scenarioBadge').textContent = `Flood severity: ${state.floodSeverity.toLowerCase()} • ${floodState[state.floodSeverity]}`;
+    }
+
+    function setFloodSeverity(value) {
+      state.floodSeverity = value;
+      updateFloodLayer();
+      updateFaultState();
+      updateSummary();
+    }
+
+    function updateFloodLayer() {
+      floodLayer.clearLayers();
+      if (!state.floodEnabled) return;
+
+      const levels = ['Low', 'Medium', 'Severe', 'Extreme'];
+      const index = levels.indexOf(state.floodSeverity);
+      const visibleZones = levels.slice(0, index + 1);
+
+      for (const zone of floodZones) {
+        if (visibleZones.includes(zone.severity)) {
+          L.polygon(zone.coords, {
+            color: zone.fillColor,
+            fillColor: zone.fillColor,
+            fillOpacity: zone.opacity,
+            weight: 1.2,
+            opacity: 0.7,
+            interactive: false
+          }).addTo(floodLayer);
+        }
+      }
+    }
+
+    function renderMapLines() {
+      lineLayer.clearLayers();
+      const highlightSet = new Set(state.highlightIds);
+      const connected = poweredSet();
+
+      for (const edge of edges) {
+        const a = getNodeById(edge.a);
+        const b = getNodeById(edge.b);
+        const latlngs = [
+          [a.lat, a.lng],
+          [b.lat, b.lng]
+        ];
+
+        const lineColor = edge.repaired ? '#4fe0a2' : highlightSet.has(edge.id) ? '#f9c74f' : '#ff5c7a';
+        const lineWeight = highlightSet.has(edge.id) ? 7 : edge.repaired ? 4 : 3.5;
+
+        const polyline = L.polyline(latlngs, {
+          color: lineColor,
+          weight: lineWeight,
+          opacity: edge.repaired ? 0.9 : 0.85,
+          dashArray: edge.repaired ? null : '8 10',
+          lineCap: 'round',
+          lineJoin: 'round'
+        }).bindPopup(`
+          <strong>${edge.id}</strong>
+          <div class="meta">${a.name} → ${b.name}</div>
+          <div class="meta">Repair effort: ${edge.weight}</div>
+          <div class="meta">Damage: ${edge.damage}</div>
+          <div class="meta">Status: ${edge.repaired ? 'Repaired' : 'Damaged'}</div>
+        `);
+
+        polyline.on('click', () => {
+          if (!edge.repaired) repairEdge(edge.id);
+        });
+        polyline.addTo(lineLayer);
+
+        if (!edge.repaired && state.floodSeverity === 'Extreme' && edge.damage === 'Critical') {
+          const mid = L.latLng((a.lat + b.lat) / 2, (a.lng + b.lng) / 2);
+          L.circle(mid, {
+            radius: 350,
+            color: '#1d4ed8',
+            fillColor: '#1d4ed8',
+            fillOpacity: 0.22,
+            weight: 1,
+            interactive: false
+          }).addTo(lineLayer);
+        }
+      }
+
+      markerLayer.clearLayers();
+      for (const node of nodes) {
+        const isPowered = connected.has(node.id);
+        const color = isPowered ? '#4fe0a2' : '#ff5c7a';
+        const marker = L.circleMarker([node.lat, node.lng], {
+          radius: 13,
+          color: '#e7f2ff',
+          weight: 2,
+          fillColor: color,
+          fillOpacity: 0.9
+        }).bindPopup(`
+          <strong>${node.name}</strong>
+          <div class="meta">Type: ${node.type}</div>
+          <div class="meta">Status: ${isPowered ? 'Online' : 'Offline'}</div>
+          <div class="meta">Voltage: ${node.voltage || '11 kV'}</div>
+          <div class="meta">Load: ${node.load || 0}%</div>
+          <div class="meta">Affected customers: ${node.customers || 0}</div>
+        `);
+        marker.addTo(markerLayer);
+
+        const label = L.marker([node.lat + 0.0027, node.lng + 0.0024], {
+          icon: L.divIcon({
+            className: 'node-label',
+            html: `<div style="background: rgba(7,18,25,0.7); border: 1px solid rgba(128,175,222,0.4); color: #edf6ff; padding: 4px 7px; border-radius: 999px; font-size: 10px; font-weight: 700; white-space: nowrap;">${node.id}</div>`,
+            iconSize: [36, 20],
+            iconAnchor: [18, 10]
+          })
+        }).addTo(markerLayer);
+        label.bindPopup(`
+          <strong>${node.name}</strong>
+          <div class="meta">Priority: ${node.priority || 'N/A'}</div>
+        `);
+      }
+    }
+
+    function renderPanel() {
+      const panel = document.getElementById('panelContent');
+      const connected = poweredSet();
+      const repairPlan = greedyRepairPlan();
+      const bestPath = dijkstraTo('H1');
+
+      if (state.activeTab === 'overview') {
+        panel.innerHTML = `
+          <div class="panel-group">
+            <h3>Operational view</h3>
+            <div class="info-block">
+              <p>${state.dispatchMessage}</p>
+            </div>
+            <div class="row"><span>Repair strategy</span><b>Priority-first restoration</b></div>
+            <div class="row"><span>Current power nodes</span><b>${Array.from(connected).join(', ')}</b></div>
+            <div class="row"><span>Hospital path</span><b>${bestPath.path.length ? bestPath.path.map((edge) => edge.id).join(' → ') : 'Already restored'}</b></div>
+            <div class="row"><span>Best effort to hospital</span><b>${bestPath.distance.H1 === Infinity ? '∞' : bestPath.distance.H1}</b></div>
+          </div>
+          <div class="panel-group">
+            <h3>Recommended immediate action</h3>
+            <div class="info-block">
+              <p>${repairPlan.length ? `${repairPlan[0].id} is the highest-impact next repair because it maximizes ${repairPlan[0].weight}-effort gain for restored power.` : 'No immediate gain is available under the current topology.'}</p>
+            </div>
+            <div class="row"><span>Next line</span><b>${repairPlan.length ? repairPlan[0].id : 'None'}</b></div>
+            <div class="row"><span>Repair effort</span><b>${repairPlan.length ? repairPlan[0].weight : 0}</b></div>
+            <div class="row"><span>Estimated time</span><b>${repairPlan.length ? `${repairPlan[0].repairTime} hours` : 'N/A'}</b></div>
+          </div>
+        `;
+      }
+
+      if (state.activeTab === 'bfs') {
+        const bfs = bfsState();
+        panel.innerHTML = `
+          <div class="panel-group">
+            <h3>BFS power graph</h3>
+            <div class="info-block"><p>BFS expands simultaneously from the two energized substations and only follows repaired lines.</p></div>
+            <div class="row"><span>Visit order</span><b>${bfs.order.join(' → ')}</b></div>
+            <div class="row"><span>Powered nodes</span><b>${Array.from(bfs.seen).join(', ')}</b></div>
+            <div class="row"><span>Critical facility status</span><b>${connected.has('H1') ? 'Hospital powered' : 'Hospital offline'}</b></div>
+          </div>
+        `;
+      }
+
+      if (state.activeTab === 'dijkstra') {
+        const results = dijkstraTo('H1');
+        panel.innerHTML = `
+          <div class="panel-group">
+            <h3>Dijkstra — Hospital route</h3>
+            <div class="info-block"><p>The algorithm minimizes total repair effort required to connect the hospital to the network.</p></div>
+            <div class="row"><span>Best total effort</span><b>${results.distance.H1 === Infinity ? '∞' : results.distance.H1}</b></div>
+            <div class="row"><span>Shortest path</span><b>${results.path.length ? results.path.map((edge) => edge.id).join(' → ') : 'No incomplete route is necessary'}</b></div>
+            <table>
+              <thead><tr><th>Node</th><th>Distance</th></tr></thead>
+              <tbody>
+                ${nodes.map((node) => `<tr><td>${node.name}</td><td>${results.distance[node.id] === Infinity ? '∞' : results.distance[node.id]}</td></tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      if (state.activeTab === 'kruskal') {
+        const mst = minimumSpanningTree();
+        panel.innerHTML = `
+          <div class="panel-group">
+            <h3>Kruskal minimum spanning tree</h3>
+            <div class="info-block"><p>Union-Find rejects any edge that would create a cycle; accepted edges form the minimal connecting network.</p></div>
+            <div class="row"><span>MST total effort</span><b>${mst.total}</b></div>
+            ${mst.chosen.map((edge, index) => `<div class="row"><span>${index + 1}. ${formatEdge(edge)}</span><span class="tag">accept</span></div>`).join('') || '<div class="row"><span>No accepted links</span><b>—</b></div>'}
+          </div>
+        `;
+      }
+    }
+
+    function repairEdge(edgeId) {
+      const edge = getEdgeById(edgeId);
+      if (!edge || edge.repaired) {
+        toast('This line is already repaired.');
+        return;
+      }
+
+      edge.repaired = true;
+      edge.status = 'Repaired';
+      state.dispatchMessage = `${edge.id} repaired. Control center re-evaluated the restoration plan for the affected service area.`;
+      state.highlightIds = [edgeId];
+      toast(`${edge.id} repaired`);
+      renderPanel();
+      renderMapLines();
+      updateSummary();
+      window.setTimeout(() => {
+        state.highlightIds = [];
+        renderMapLines();
+      }, 1200);
+    }
+
+    function repairRecommendedLine() {
+      const plan = greedyRepairPlan();
+      if (!plan.length) {
+        toast('No further repair yields immediate benefit in the current scenario.');
+        return;
+      }
+      repairEdge(plan[0].id);
+    }
+
+    function repairHospitalPath() {
+      const path = dijkstraTo('H1').path;
+      const edge = path.find((candidate) => !candidate.repaired);
+      if (!edge) {
+        toast('Hospital route is already fully restored.');
+        return;
+      }
+      repairEdge(edge.id);
+    }
+
+    function highlightMST() {
+      const chosen = minimumSpanningTree().chosen.map((edge) => edge.id);
+      state.highlightIds = chosen;
+      state.activeTab = 'kruskal';
+      document.querySelectorAll('.tab').forEach((btn) => btn.classList.toggle('active', btn.dataset.tab === 'kruskal'));
+      renderPanel();
+      renderMapLines();
+    }
+
+    function randomDamage() {
+      const damaged = edges.filter((edge) => edge.repaired);
+      if (!damaged.length) {
+        toast('No repaired line is available to damage.');
+        return;
+      }
+      const target = damaged[Math.floor(Math.random() * damaged.length)];
+      target.repaired = false;
+      target.status = 'Damaged';
+      state.dispatchMessage = `Storm damage reported on ${target.id}; field crews are rerouting emergency restoration work.`;
+      toast(`${target.id} damaged by flood event`);
+      renderPanel();
+      renderMapLines();
+      updateSummary();
+    }
+
+    function resetScenario() {
+      edges.forEach((edge) => {
+        edge.repaired = false;
+        edge.status = 'Damaged';
+      });
+      state.highlightIds = [];
+      state.dispatchMessage = 'All critical power lines are currently damaged; dispatch your restoration team.';
+      setFloodSeverity('Medium');
+      renderPanel();
+      renderMapLines();
+      updateSummary();
+      toast('Scenario reset');
+    }
+
+    function bindTabs() {
+      document.querySelectorAll('.tab').forEach((button) => {
+        button.addEventListener('click', () => {
+          state.activeTab = button.dataset.tab;
+          document.querySelectorAll('.tab').forEach((el) => el.classList.toggle('active', el === button));
+          renderPanel();
+        });
+      });
+    }
+
+    function initControls() {
+      document.getElementById('toggleFloodBtn').addEventListener('click', () => {
+        state.floodEnabled = !state.floodEnabled;
+        document.getElementById('toggleFloodBtn').textContent = `Flood Layer: ${state.floodEnabled ? 'ON' : 'OFF'}`;
+        updateFloodLayer();
+      });
+
+      document.getElementById('severitySelect').addEventListener('change', (event) => {
+        setFloodSeverity(event.target.value);
+      });
+
+      document.getElementById('nextRepairBtn').addEventListener('click', repairRecommendedLine);
+      document.getElementById('hospitalPathBtn').addEventListener('click', repairHospitalPath);
+      document.getElementById('mstBtn').addEventListener('click', highlightMST);
+      document.getElementById('damageBtn').addEventListener('click', randomDamage);
+      document.getElementById('resetBtn').addEventListener('click', resetScenario);
+    }
+
+    function validateMapAvailability() {
+      const overlay = document.getElementById('fallbackOverlay');
+      if (!navigator.onLine) {
+        overlay.classList.add('visible');
+      }
+      window.addEventListener('offline', () => overlay.classList.add('visible'));
+      window.addEventListener('online', () => overlay.classList.remove('visible'));
+    }
+
+    bindTabs();
+    initControls();
+    setFloodSeverity('Medium');
+    renderPanel();
+    renderMapLines();
+    updateSummary();
+    validateMapAvailability();
+  </script>
+</body>
+</html>

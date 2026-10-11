@@ -1,6 +1,8 @@
 EMERGENCY POWER GRID RESTORATION CONTROL CENTER
 ==============================================
 
+live Here : https://preetham078.github.io/SIMULATED-DISASTER-SCENARIO/
+
 Open index.html in any modern browser.
 
 This project has been transformed from a small abstract 7-node teaching graph into a realistic emergency power-grid restoration simulator for a simulated flood-response scenario in Bengaluru.

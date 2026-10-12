@@ -1,6 +1,9 @@
 EMERGENCY POWER GRID RESTORATION CONTROL CENTER
 ==============================================
 
+live here: https://preetham078.github.io/SIMULATED-DISASTER-SCENARIO/
+
+
 This is an educational Bengaluru flood-response simulation. It combines a
 browser dashboard with C++ graph algorithms compiled to WebAssembly. The
 JavaScript files only load the WebAssembly module, translate data for the UI,

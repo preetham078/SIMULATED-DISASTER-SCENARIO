@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Serve Power Grid Website",
+			"type": "shell",
+			"command": "node",
+			"args": ["serve.js"],
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}

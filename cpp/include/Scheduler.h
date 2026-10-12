@@ -5,13 +5,15 @@
 #include <cstddef>
 #include <vector>
 
+using namespace std;
+
 struct RepairStep {
-    std::size_t edgeIndex;
+    size_t edgeIndex;
     int restorationGain;
 };
 
 struct ScheduleResult {
-    std::vector<RepairStep> steps;
+    vector<RepairStep> steps;
     int totalEffort;
 };
 

@@ -5,8 +5,10 @@
 #include <cstddef>
 #include <vector>
 
+using namespace std;
+
 struct KruskalResult {
-    std::vector<std::size_t> chosenEdges;
+    vector<size_t> chosenEdges;
     int totalEffort;
     bool connectable;
 };

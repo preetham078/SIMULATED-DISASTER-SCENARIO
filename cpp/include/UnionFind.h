@@ -3,15 +3,17 @@
 #include <cstddef>
 #include <vector>
 
+using namespace std;
+
 class UnionFind {
 public:
-    explicit UnionFind(std::size_t size);
-    std::size_t find(std::size_t item);
-    bool unite(std::size_t left, std::size_t right);
-    std::size_t components() const;
+    explicit UnionFind(size_t size);
+    size_t find(size_t item);
+    bool unite(size_t left, size_t right);
+    size_t components() const;
 
 private:
-    std::vector<std::size_t> parent_;
-    std::vector<unsigned int> rank_;
-    std::size_t components_;
+    vector<size_t> parent_;
+    vector<unsigned int> rank_;
+    size_t components_;
 };

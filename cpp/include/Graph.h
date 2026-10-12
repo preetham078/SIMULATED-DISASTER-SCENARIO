@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+using namespace std;
+
 enum class NodeType {
     Substation,
     Hospital,
@@ -12,8 +14,8 @@ enum class NodeType {
 };
 
 struct Node {
-    std::string id;
-    std::string name;
+    string id;
+    string name;
     NodeType type;
     double latitude;
     double longitude;
@@ -24,12 +26,12 @@ struct Node {
 };
 
 struct Edge {
-    std::string id;
-    std::size_t from;
-    std::size_t to;
+    string id;
+    size_t from;
+    size_t to;
     int effort;
     bool repaired;
-    std::string damage;
+    string damage;
     int repairHours;
     double lengthKm;
 };
@@ -38,20 +40,20 @@ class Graph {
 public:
     Graph();
 
-    const std::vector<Node>& nodes() const;
-    const std::vector<Edge>& edges() const;
-    std::vector<Node>& nodes();
-    std::vector<Edge>& edges();
-    std::size_t nodeIndex(const std::string& id) const;
-    std::size_t edgeIndex(const std::string& id) const;
-    std::size_t addNode(const std::string& name, NodeType type, double latitude, double longitude);
-    std::size_t addEdge(const std::string& from, const std::string& to, int effort);
+    const vector<Node>& nodes() const;
+    const vector<Edge>& edges() const;
+    vector<Node>& nodes();
+    vector<Edge>& edges();
+    size_t nodeIndex(const string& id) const;
+    size_t edgeIndex(const string& id) const;
+    size_t addNode(const string& name, NodeType type, double latitude, double longitude);
+    size_t addEdge(const string& from, const string& to, int effort);
     void resetLines();
     int totalRepairedEffort() const;
 
 private:
-    std::vector<Node> nodes_;
-    std::vector<Edge> edges_;
+    vector<Node> nodes_;
+    vector<Edge> edges_;
 
     void seed();
 };

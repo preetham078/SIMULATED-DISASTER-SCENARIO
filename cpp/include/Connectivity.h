@@ -4,22 +4,24 @@
 
 #include <vector>
 
+using namespace std;
+
 struct RepairedComponents {
-    std::vector<int> componentByNode;
-    std::vector<int> componentValues;
-    std::vector<bool> componentPowered;
+    vector<int> componentByNode;
+    vector<int> componentValues;
+    vector<bool> componentPowered;
 };
 
 class Connectivity {
 public:
     explicit Connectivity(const Graph& graph);
-    std::vector<std::size_t> poweredNodes(const std::vector<bool>& simulated = {}) const;
-    std::vector<std::size_t> breadthFirstOrder() const;
-    std::vector<std::vector<std::size_t>> unpoweredGroups() const;
-    int restorationValue(std::size_t nodeIndex) const;
-    RepairedComponents repairedComponents(const std::vector<bool>& simulated) const;
+    vector<size_t> poweredNodes(const vector<bool>& simulated = {}) const;
+    vector<size_t> breadthFirstOrder() const;
+    vector<vector<size_t>> unpoweredGroups() const;
+    int restorationValue(size_t nodeIndex) const;
+    RepairedComponents repairedComponents(const vector<bool>& simulated) const;
 
 private:
     const Graph& graph_;
-    bool edgeAvailable(std::size_t edgeIndex, const std::vector<bool>& simulated) const;
+    bool edgeAvailable(size_t edgeIndex, const vector<bool>& simulated) const;
 };

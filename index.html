@@ -84,7 +84,8 @@
       display: grid;
       grid-template-columns: minmax(0, 1.75fr) minmax(320px, 430px);
       gap: 18px;
-      height: calc(100vh - 94px);
+      min-height: calc(100vh - 94px);
+      height: auto;
       padding: 18px;
     }
 
@@ -185,6 +186,7 @@
       flex-wrap: wrap;
       gap: 8px;
       padding: 0 18px 18px;
+      flex: 0 0 auto;
     }
 
     .sidebar { display: flex; flex-direction: column; min-height: 0; }

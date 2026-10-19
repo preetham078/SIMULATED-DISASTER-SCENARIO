@@ -151,12 +151,12 @@ window.PowerGridReady.then(() => {
         if (edge.repaired && connected.has(a.id) && connected.has(b.id)) {
           L.polyline(latlngs, {
             renderer: flowRenderer,
-            color: '#bbf7d0',
-            weight: 4,
-            opacity: 0.95,
-            dashArray: '2 18',
+            color: '#facc15',
+            weight: 5,
+            opacity: 1,
+            dashArray: '1 24',
             lineCap: 'round',
-            className: 'power-flow',
+            className: 'current-particles',
             interactive: false
           }).addTo(lineLayer);
         }

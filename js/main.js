@@ -19,6 +19,7 @@ window.PowerGridReady.then(() => {
     const floodLayer = L.layerGroup().addTo(map);
     const lineLayer = L.layerGroup().addTo(map);
     const markerLayer = L.layerGroup().addTo(map);
+    const flowRenderer = L.svg({ padding: 0.5 });
 
     const state = {
       activeTab: 'overview',
@@ -49,11 +50,11 @@ window.PowerGridReady.then(() => {
       banner.style.bottom = '20px';
       banner.style.left = '50%';
       banner.style.transform = 'translateX(-50%)';
-      banner.style.background = 'rgba(13, 29, 43, 0.96)';
-      banner.style.border = '1px solid rgba(90, 185, 255, 0.5)';
-      banner.style.boxShadow = '0 15px 35px rgba(0,0,0,0.25)';
-      banner.style.color = '#edf6ff';
-      banner.style.borderRadius = '12px';
+      banner.style.background = '#ffffff';
+      banner.style.border = '1px solid #d1d5db';
+      banner.style.boxShadow = '0 8px 24px rgba(15, 23, 42, 0.14)';
+      banner.style.color = '#1f2937';
+      banner.style.borderRadius = '8px';
       banner.style.padding = '10px 16px';
       banner.style.zIndex = '1200';
       banner.style.fontSize = '0.8rem';
@@ -129,7 +130,7 @@ window.PowerGridReady.then(() => {
           [b.lat, b.lng]
         ];
 
-        const lineColor = edge.repaired ? '#4fe0a2' : highlightSet.has(edge.id) ? '#f9c74f' : '#ff5c7a';
+        const lineColor = edge.repaired ? '#15803d' : highlightSet.has(edge.id) ? '#d97706' : '#dc2626';
         const lineWeight = highlightSet.has(edge.id) ? 7 : edge.repaired ? 4 : 3.5;
 
         const polyline = L.polyline(latlngs, {
@@ -146,6 +147,19 @@ window.PowerGridReady.then(() => {
           <div class="meta">Damage: ${edge.damage}</div>
           <div class="meta">Status: ${edge.repaired ? 'Repaired' : 'Damaged'}</div>
         `);
+
+        if (edge.repaired && connected.has(a.id) && connected.has(b.id)) {
+          L.polyline(latlngs, {
+            renderer: flowRenderer,
+            color: '#bbf7d0',
+            weight: 4,
+            opacity: 0.95,
+            dashArray: '2 18',
+            lineCap: 'round',
+            className: 'power-flow',
+            interactive: false
+          }).addTo(lineLayer);
+        }
 
         polyline.on('click', () => {
           if (!edge.repaired) repairEdge(edge.id);
@@ -168,10 +182,10 @@ window.PowerGridReady.then(() => {
       markerLayer.clearLayers();
       for (const node of nodes) {
         const isPowered = connected.has(node.id);
-        const color = isPowered ? '#4fe0a2' : '#ff5c7a';
+        const color = isPowered ? '#15803d' : '#dc2626';
         const marker = L.circleMarker([node.lat, node.lng], {
           radius: 13,
-          color: '#e7f2ff',
+          color: '#ffffff',
           weight: 2,
           fillColor: color,
           fillOpacity: 0.9
@@ -188,7 +202,7 @@ window.PowerGridReady.then(() => {
         const label = L.marker([node.lat + 0.0027, node.lng + 0.0024], {
           icon: L.divIcon({
             className: 'node-label',
-            html: `<div style="background: rgba(7,18,25,0.7); border: 1px solid rgba(128,175,222,0.4); color: #edf6ff; padding: 4px 7px; border-radius: 999px; font-size: 10px; font-weight: 700; white-space: nowrap;">${node.id}</div>`,
+            html: `<div style="background: rgba(255,255,255,0.94); border: 1px solid #d1d5db; color: #1f2937; padding: 4px 7px; border-radius: 999px; font-size: 10px; font-weight: 700; white-space: nowrap;">${node.id}</div>`,
             iconSize: [36, 20],
             iconAnchor: [18, 10]
           })

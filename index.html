@@ -10,41 +10,45 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <style>
     :root {
-      --bg: #071722;
-      --panel: rgba(11, 23, 36, 0.95);
-      --panel-strong: #0d1d2b;
-      --panel-soft: #12263a;
-      --line: rgba(109, 148, 182, 0.3);
-      --text: #edf6ff;
-      --muted: #a9bfd3;
-      --accent: #54d4a8;
-      --accent-2: #5ab9ff;
-      --warning: #f9c74f;
-      --danger: #ff5c7a;
-      --danger-deep: #b21a3d;
-      --shadow: 0 20px 50px rgba(2, 8, 15, 0.45);
+      --bg: #f3f4f6;
+      --panel: #ffffff;
+      --panel-strong: #ffffff;
+      --panel-soft: #f8fafc;
+      --line: #e5e7eb;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent: #2563eb;
+      --accent-2: #1d4ed8;
+      --success: #15803d;
+      --warning: #a16207;
+      --danger: #b91c1c;
+      --danger-deep: #991b1b;
+      --shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
     }
 
     * { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; background: linear-gradient(180deg, #051018 0%, #071722 100%); color: var(--text); font-family: 'Inter', sans-serif; }
+    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
     body { min-height: 100vh; }
 
     button, select, input {
       appearance: none;
-      border: 1px solid rgba(128, 175, 222, 0.35);
-      background: rgba(18, 38, 58, 0.9);
+      border: 1px solid #d1d5db;
+      background: #ffffff;
       color: var(--text);
-      border-radius: 10px;
+      border-radius: 8px;
       padding: 9px 12px;
       font: inherit;
       cursor: pointer;
       transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
     }
     input { width: 100%; cursor: text; }
-    button:hover { transform: translateY(-1px); border-color: rgba(90, 185, 255, 0.7); }
-    button.primary { background: linear-gradient(135deg, #1f7f8d, #1c9a74); border-color: rgba(84, 212, 168, 0.7); }
-    button.danger { background: linear-gradient(135deg, rgba(178, 26, 61, 0.65), rgba(127, 21, 45, 0.8)); border-color: rgba(255, 92, 122, 0.7); }
-    button.ghost { background: rgba(10, 20, 30, 0.7); }
+    button:hover { transform: translateY(-1px); border-color: var(--accent); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: #ffffff; }
+    button.primary:hover { background: var(--accent-2); border-color: var(--accent-2); }
+    button.danger { background: #ffffff; border-color: #fecaca; color: var(--danger); }
+    button.danger:hover { background: #fef2f2; border-color: var(--danger); }
+    button.ghost { background: #ffffff; }
+    button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid rgba(37, 99, 235, 0.2); outline-offset: 1px; }
     select { min-width: 150px; }
 
     .topbar {
@@ -53,9 +57,9 @@
       align-items: center;
       gap: 18px;
       padding: 18px 22px 16px;
-      border-bottom: 1px solid rgba(124, 150, 175, 0.2);
-      background: rgba(9, 19, 29, 0.9);
-      box-shadow: inset 0 -1px rgba(124,150,175,0.08);
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
       position: sticky;
       top: 0;
       z-index: 1000;
@@ -65,7 +69,7 @@
       font-size: 11px;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: var(--warning);
+      color: var(--accent);
       margin-bottom: 6px;
       font-weight: 700;
     }
@@ -92,8 +96,8 @@
 
     .card {
       background: var(--panel);
-      border: 1px solid rgba(106, 147, 186, 0.22);
-      border-radius: 18px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
       box-shadow: var(--shadow);
       overflow: hidden;
       min-width: 0;
@@ -113,9 +117,9 @@
       padding: 18px 18px 0;
     }
     .stat-box {
-      background: linear-gradient(180deg, rgba(14, 32, 46, 0.97), rgba(12, 26, 36, 0.95));
-      border: 1px solid rgba(101, 140, 180, 0.25);
-      border-radius: 14px;
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      border-radius: 10px;
       padding: 14px 12px;
     }
     .stat-box strong {
@@ -140,8 +144,8 @@
       isolation: isolate;
       overflow: hidden;
       border-radius: 16px;
-      border: 1px solid rgba(120, 160, 200, 0.25);
-      background: linear-gradient(180deg, #0d2236, #091c2d);
+      border: 1px solid #d1d5db;
+      background: #e5e7eb;
     }
 
     #map {
@@ -151,7 +155,7 @@
       height: 100%;
       min-height: 0;
       border-radius: inherit;
-      background: linear-gradient(180deg, #0d2236, #091c2d);
+      background: #e5e7eb;
     }
 
     .fallback-overlay {
@@ -159,7 +163,7 @@
       inset: 0;
       display: none;
       place-items: center;
-      background: radial-gradient(circle at center, rgba(15, 27, 36, 0.9), rgba(8,19,28,0.96));
+      background: rgba(255, 255, 255, 0.94);
       color: var(--muted);
       font-size: 0.9rem;
       text-align: center;
@@ -207,14 +211,14 @@
     .tabbar {
       display: grid;
       grid-template-columns: repeat(6, minmax(0,1fr));
-      border-bottom: 1px solid rgba(104, 140, 178, 0.22);
-      background: rgba(7, 17, 25, 0.9);
+      border-bottom: 1px solid var(--line);
+      background: #f9fafb;
     }
     .tab {
       background: transparent; border: 0; border-radius: 0; padding: 11px 4px; color: var(--muted); position: relative; font-size: 0.72rem; }
     .tab.active {
-      color: var(--text);
-      background: rgba(18, 38, 58, 0.9);
+      color: var(--accent);
+      background: #ffffff;
       box-shadow: inset 0 -2px 0 var(--accent);
     }
 
@@ -232,9 +236,9 @@
       color: var(--muted);
     }
     .info-block {
-      background: rgba(12, 24, 33, 0.9);
-      border: 1px solid rgba(101, 140, 180, 0.2);
-      border-radius: 12px;
+      background: #f9fafb;
+      border: 1px solid var(--line);
+      border-radius: 8px;
       padding: 12px 14px;
       margin-bottom: 10px;
     }
@@ -249,12 +253,12 @@
       justify-content: space-between;
       gap: 12px;
       padding: 8px 0;
-      border-bottom: 1px solid rgba(109, 148, 182, 0.16);
+      border-bottom: 1px solid #e5e7eb;
       font-size: 0.85rem;
     }
     .row:last-child { border-bottom: 0; }
     .row span:first-child { color: var(--muted); }
-    .accent { color: var(--accent); }
+    .accent { color: var(--success); }
     .warning { color: var(--warning); }
     .danger-text { color: var(--danger); }
     .tag {
@@ -262,16 +266,16 @@
       align-items: center;
       padding: 3px 8px;
       border-radius: 999px;
-      background: rgba(84,212,168,0.12);
-      color: var(--accent);
-      border: 1px solid rgba(84,212,168,0.2);
+      background: #f0fdf4;
+      color: var(--success);
+      border: 1px solid #bbf7d0;
       font-size: 0.68rem;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       font-weight: 700;
     }
-    .tag.warning { background: rgba(249,199,79,0.12); color: var(--warning); border-color: rgba(249,199,79,0.2); }
-    .tag.danger { background: rgba(255,92,122,0.12); color: var(--danger); border-color: rgba(255,92,122,0.2); }
+    .tag.warning { background: #fffbeb; color: var(--warning); border-color: #fde68a; }
+    .tag.danger { background: #fef2f2; color: var(--danger); border-color: #fecaca; }
 
     table {
       width: 100%;
@@ -281,21 +285,26 @@
     }
     th, td {
       padding: 7px 6px;
-      border-bottom: 1px solid rgba(109, 148, 182, 0.14);
+      border-bottom: 1px solid #e5e7eb;
       text-align: left;
     }
     th { color: var(--muted); font-weight: 600; }
 
     .leaflet-container {
-      background: rgba(9, 19, 29, 1);
+      background: #e5e7eb;
       font: inherit;
     }
     .leaflet-control-attribution { font-size: 10px; }
-    .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: rgba(8, 18, 25, 0.96); color: var(--text); }
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #ffffff; color: var(--text); }
     .leaflet-popup-content { margin: 10px 14px; min-width: 170px; }
     .leaflet-popup-content strong { display: block; margin-bottom: 6px; }
     .leaflet-popup-content .meta { color: var(--muted); font-size: 0.75rem; }
-    .leaflet-control-zoom a { background: rgba(16, 33, 47, 0.92); color: var(--text); border-color: rgba(118,153,188,0.28); }
+    .leaflet-control-zoom a { background: #ffffff; color: var(--text); border-color: #d1d5db; }
+    .power-flow { animation: current-flow 0.9s linear infinite; }
+    @keyframes current-flow { to { stroke-dashoffset: -20; } }
+    @media (prefers-reduced-motion: reduce) {
+      .power-flow { animation: none; }
+    }
     .editor-form { display: grid; gap: 10px; }
     .editor-form label { display: grid; gap: 5px; color: var(--muted); font-size: 0.78rem; }
     .editor-form input, .editor-form select { min-width: 0; width: 100%; }
@@ -383,10 +392,10 @@
       </div>
 
       <div class="legend-strip">
-        <span class="legend-item"><span class="dot" style="background: #4fe0a2;"></span>Powered</span>
-        <span class="legend-item"><span class="dot" style="background: #ff5c7a;"></span>Unpowered</span>
-        <span class="legend-item"><span class="dot" style="background: #4bd0ff;"></span>Water/flood risk</span>
-        <span class="legend-item"><span class="dot" style="background: #f9c74f;"></span>Repair recommendation</span>
+        <span class="legend-item"><span class="dot" style="background: #15803d;"></span>Powered</span>
+        <span class="legend-item"><span class="dot" style="background: #dc2626;"></span>Unpowered</span>
+        <span class="legend-item"><span class="dot" style="background: #0891b2;"></span>Water/flood risk</span>
+        <span class="legend-item"><span class="dot" style="background: #d97706;"></span>Repair recommendation</span>
       </div>
 
       <div class="action-row">

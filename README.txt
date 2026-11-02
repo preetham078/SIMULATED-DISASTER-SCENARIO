@@ -4,7 +4,7 @@ An educational disaster-response and power-grid restoration simulation that mode
 
 The project combines a browser-based interactive dashboard with C++ graph algorithms compiled to WebAssembly (WASM). The C++ layer handles the graph state and algorithms, while JavaScript connects the algorithms to the web interface.
 
-🌐 Live Demo
+🌐 Live Demo :https://preetham078.github.io/SIMULATED-DISASTER-SCENARIO/
 
 Launch the Emergency Power Grid Simulation
 

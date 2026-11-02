@@ -1,69 +1,264 @@
-EMERGENCY POWER GRID RESTORATION CONTROL CENTER
-==============================================
+🚨 Emergency Power Grid Restoration Control Center
 
-live here: https://preetham078.github.io/SIMULATED-DISASTER-SCENARIO/
+An educational disaster-response and power-grid restoration simulation that models how emergency teams can analyze damaged infrastructure, identify critical connected locations, and prioritize repair operations during a simulated flood.
 
+The project combines a browser-based interactive dashboard with C++ graph algorithms compiled to WebAssembly (WASM). The C++ layer handles the graph state and algorithms, while JavaScript connects the algorithms to the web interface.
 
-This is an educational flood-response simulation. It combines a
-browser dashboard with C++ graph algorithms compiled to WebAssembly. The
-JavaScript files only load the WebAssembly module, translate data for the UI,
-and handle browser events; graph state and algorithm results come from C++.
+🌐 Live Demo
 
-Features:
-- Leaflet/OpenStreetMap map, simulated flood overlays, and offline map fallback
-- Simulated substations, hospitals, water treatment, telecom, residential, and
-  industrial locations
-- C++ BFS powered-node discovery and DFS grouping of offline nodes
-- C++ Dijkstra minimum-effort repair paths
-- C++ Union-Find with path compression and union by rank
-- C++ Kruskal minimum additional repair network
-- C++ binary max-heap repair schedule ranked by service gain per effort
-- Browser controls for repairs, storm damage, and editing nodes and lines
+Launch the Emergency Power Grid Simulation
 
-C++ source guide:
+⸻
 
-| File | What to explain |
-| --- | --- |
-| `cpp/include/Graph.h`, `cpp/src/Graph.cpp` | Graph data structures, initial grid, validation, and editing |
-| `cpp/include/Connectivity.h`, `cpp/src/Connectivity.cpp` | Multi-source BFS, DFS offline groups, and service value |
-| `cpp/include/Dijkstra.h`, `cpp/src/Dijkstra.cpp` | Minimum additional repair effort and path reconstruction |
-| `cpp/include/UnionFind.h`, `cpp/src/UnionFind.cpp` | Disjoint sets, path compression, and union by rank |
-| `cpp/include/Kruskal.h`, `cpp/src/Kruskal.cpp` | Minimum spanning repair network using Union-Find |
-| `cpp/include/Scheduler.h`, `cpp/src/Scheduler.cpp` | Binary max-heap prioritizing newly restored service per effort |
-| `cpp/src/bridge.cpp` | C interface called by the browser to access the C++ graph |
-| `cpp/tests.cpp` | Native checks for graph, algorithms, and editing |
-| `js/wasm.js` | Loads the WebAssembly module and adapts its interface for the page |
-| `js/main.js` | Map, dashboard, forms, buttons, and result rendering |
-| `index.html` | Page layout and script loading order |
+🎯 Project Objective
 
-Suggested explanation order: Graph, BFS/DFS, Dijkstra, Union-Find, Kruskal,
-the repair scheduler, the C bridge, and finally the browser adapter and UI.
+The goal of this project is to demonstrate how Data Structures and Algorithms can be applied to real-world disaster-management scenarios.
 
-Build the C++ WebAssembly module:
-1. Install the Emscripten SDK (em++, emcc).
-2. From the project directory, run `sh cpp/build-wasm.sh`.
-   It generates `cpp/power-grid.js` and `cpp/power-grid.wasm`. Keep both
-   generated files with the site when publishing it.
-3. Serve the project over HTTP (for example, `python3 -m http.server 8000`)
-   and open `http://localhost:8000`. Do not open `index.html` using `file://`;
-   browsers block WebAssembly fetching from file URLs.
+The simulation represents critical infrastructure such as:
 
-Run the native C++ tests:
-`clang++ -std=c++17 -Wall -Wextra -pedantic -Icpp/include cpp/src/Graph.cpp cpp/src/Connectivity.cpp cpp/src/Dijkstra.cpp cpp/src/UnionFind.cpp cpp/src/Kruskal.cpp cpp/src/Scheduler.cpp cpp/tests.cpp -o /tmp/power-grid-tests`
-`/tmp/power-grid-tests`
+* ⚡ Electrical substations
+* 🏥 Hospitals
+* 💧 Water treatment facilities
+* 📡 Telecommunication facilities
+* 🏠 Residential areas
+* 🏭 Industrial locations
 
-Usage:
-1. Build the WebAssembly module and serve the project over HTTP.
-2. Toggle the flood layer or change its severity.
-3. Use the Overview, BFS, Dijkstra, Kruskal, Schedule, and Grid tabs.
-4. Add grid nodes and power lines or repair/report damage on individual lines.
-5. Use the action buttons to repair the next recommendation, follow the
-   hospital route, highlight the Kruskal network, or inject storm damage.
-6. Reset restores all lines to damaged; added nodes and lines remain in the
-   current browser session.
+When infrastructure is affected by simulated flooding or storm damage, graph algorithms are used to determine connectivity, repair paths, and the most effective restoration strategy.
 
-The simulated infrastructure is for educational purposes only. It does not
-represent real-world outages or damage.
+⸻
 
-Algorithm/workflow reference:
-https://github.com/chetan-1747/data-structures-micro-project/tree/main/Power%20Grid%20v1
+🧠 Algorithms Implemented
+
+🔵 Breadth-First Search (BFS)
+
+Used for multi-source powered-node discovery to determine which infrastructure nodes can still receive power from operational sources.
+
+🟢 Depth-First Search (DFS)
+
+Used to identify and group offline/disconnected infrastructure components.
+
+🟡 Dijkstra’s Algorithm
+
+Finds the minimum-effort repair path between infrastructure nodes and supports path reconstruction.
+
+🔴 Union-Find / Disjoint Set
+
+Maintains connectivity between infrastructure components using:
+
+* Path compression
+* Union by rank
+
+🟣 Kruskal’s Algorithm
+
+Generates a minimum spanning repair network, helping determine an efficient set of additional connections required to restore infrastructure.
+
+🟠 Binary Max-Heap
+
+The repair scheduler ranks possible repair operations based on service restored per unit of repair effort, allowing the system to prioritize high-impact repairs.
+
+⸻
+
+🏗️ System Architecture
+
+                ┌─────────────────────┐
+                │   Browser Dashboard │
+                │    HTML / CSS / JS  │
+                └──────────┬──────────┘
+                           │
+                           ▼
+                ┌─────────────────────┐
+                │    JavaScript       │
+                │    WASM Adapter     │
+                └──────────┬──────────┘
+                           │
+                    WebAssembly
+                           │
+                           ▼
+                ┌─────────────────────┐
+                │     C++ Engine      │
+                │                     │
+                │ BFS / DFS           │
+                │ Dijkstra            │
+                │ Union-Find          │
+                │ Kruskal             │
+                │ Max-Heap Scheduler  │
+                └─────────────────────┘
+
+⸻
+
+✨ Features
+
+* 🌊 Simulated flood and storm-damage scenarios
+* 🗺️ Interactive map using Leaflet/OpenStreetMap
+* ⚡ Simulated power-grid infrastructure
+* 🏥 Hospital and critical-service locations
+* 🔍 BFS and DFS connectivity analysis
+* 🛣️ Dijkstra minimum-effort repair paths
+* 🌐 Kruskal-based repair network optimization
+* 🔗 Union-Find connectivity management
+* 📊 Priority-based repair scheduling
+* 🛠️ Add and edit infrastructure nodes and power lines
+* 💥 Simulate storm damage
+* 🔧 Repair individual damaged lines
+* 📈 Dashboard for algorithm results and system status
+* 💻 C++ algorithms running in the browser through WebAssembly
+
+⸻
+
+📁 Project Structure
+
+SIMULATED-DISASTER-SCENARIO/
+│
+├── cpp/
+│   ├── include/
+│   │   ├── Graph.h
+│   │   ├── Connectivity.h
+│   │   ├── Dijkstra.h
+│   │   ├── UnionFind.h
+│   │   ├── Kruskal.h
+│   │   └── Scheduler.h
+│   │
+│   ├── src/
+│   │   ├── Graph.cpp
+│   │   ├── Connectivity.cpp
+│   │   ├── Dijkstra.cpp
+│   │   ├── UnionFind.cpp
+│   │   ├── Kruskal.cpp
+│   │   ├── Scheduler.cpp
+│   │   └── bridge.cpp
+│   │
+│   └── tests.cpp
+│
+├── js/
+│   ├── main.js
+│   └── wasm.js
+│
+├── index.html
+├── serve.js
+└── README.txt
+
+⸻
+
+🛠️ Technologies Used
+
+Technology	Purpose
+C++17	Graph algorithms and simulation engine
+WebAssembly	Run C++ algorithms inside the browser
+JavaScript	UI interaction and WASM communication
+HTML/CSS	Dashboard interface
+Leaflet	Interactive mapping
+OpenStreetMap	Map data
+GitHub Pages	Web deployment
+
+⸻
+
+⚙️ How to Run
+
+1. Install Emscripten
+
+Install the Emscripten SDK and make sure emcc and em++ are available.
+
+2. Build the WebAssembly module
+
+From the project directory:
+
+sh cpp/build-wasm.sh
+
+This generates:
+
+cpp/power-grid.js
+cpp/power-grid.wasm
+
+Keep both generated files with the project when deploying.
+
+3. Start a local server
+
+python3 -m http.server 8000
+
+Then open:
+
+http://localhost:8000
+
+Important: Do not open index.html directly using file://, because browsers can block WebAssembly resources loaded from local file URLs.
+
+⸻
+
+🧪 Running C++ Tests
+
+Compile the native test suite using:
+
+clang++ -std=c++17 -Wall -Wextra -pedantic \
+-Icpp/include \
+cpp/src/Graph.cpp \
+cpp/src/Connectivity.cpp \
+cpp/src/Dijkstra.cpp \
+cpp/src/UnionFind.cpp \
+cpp/src/Kruskal.cpp \
+cpp/src/Scheduler.cpp \
+cpp/tests.cpp \
+-o /tmp/power-grid-tests
+
+Run:
+
+/tmp/power-grid-tests
+
+⸻
+
+🎮 How to Use the Simulation
+
+1. Launch the web application.
+2. Toggle the flood layer.
+3. Adjust flood severity.
+4. Explore the Overview dashboard.
+5. Use the BFS tab to analyze powered infrastructure.
+6. Use Dijkstra to find efficient repair paths.
+7. Use Kruskal to visualize the minimum repair network.
+8. Use Schedule to identify prioritized repairs.
+9. Add or modify infrastructure nodes and power lines.
+10. Inject simulated storm damage.
+11. Repair damaged connections.
+12. Use the hospital-route feature to identify an appropriate restoration path.
+13. Reset the simulation to return infrastructure lines to their damaged state.
+
+⸻
+
+📚 Learning Outcomes
+
+This project demonstrates practical applications of:
+
+* Graph data structures
+* BFS and DFS traversal
+* Shortest-path algorithms
+* Minimum spanning trees
+* Disjoint-set data structures
+* Priority queues / heaps
+* WebAssembly
+* C++ and JavaScript interoperability
+* Interactive web-based simulations
+* Algorithmic decision-making
+
+⸻
+
+⚠️ Disclaimer
+
+This project is created for educational and demonstration purposes only.
+
+The infrastructure, flood conditions, outages, repair costs, and damage scenarios are simulated and do not represent real-world infrastructure, outages, or emergency-response decisions.
+
+⸻
+
+👨‍💻 Author
+
+Preetham M
+
+Computer Science Engineering Student
+
+GitHub: @preetham078
+
+⸻
+
+⭐ Project
+
+If you find this project useful for learning Data Structures, Algorithms, C++, or WebAssembly, consider giving the repository a ⭐.
+
+Built to demonstrate how algorithms can support decision-making during simulated disaster-response scenarios.
